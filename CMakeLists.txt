@@ -11,6 +11,11 @@ qt_add_executable(TimelineFinder
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    filemodel.h filemodel.cpp
+    pointsmodel.h pointsmodel.cpp
+    textmodel.h textmodel.cpp
+    treeitem.h treeitem.cpp
+    parseandread.h parseandread.cpp
 )
 
 target_link_libraries(TimelineFinder
