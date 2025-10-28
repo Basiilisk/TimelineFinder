@@ -10,6 +10,11 @@ struct Section {
     int start = 0; // content start (after marker)
     int end = 0; // content end (before next marker or end of text)
     QString text; // extracted text between this marker and the next
+
+    bool operator==(const QString& sec) const
+    {
+        return sec == marker;
+    }
 };
 
 // Up to three segments, each 1–3 digits, separated by dots, optional trailing dot.
@@ -91,6 +96,7 @@ public:
 
     void parse(QString& fileName, QString& rawText);
 
+    QString poinText(QString& key, QString val);
     QVector<Section> pointData(QString& key);
     QVector<QString> filesName();
     QMap<QString, QVector<Section>>& filePoint();

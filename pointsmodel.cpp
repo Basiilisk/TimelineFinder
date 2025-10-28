@@ -72,7 +72,7 @@ Qt::ItemFlags PointsModel::flags(const QModelIndex& index) const
     if (!index.isValid())
         return Qt::NoItemFlags;
 
-    return Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable;
+    return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 }
 
 QVariant PointsModel::headerData(int section, Qt::Orientation orientation, int role) const

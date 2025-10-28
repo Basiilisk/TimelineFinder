@@ -194,81 +194,17 @@ int main(int argc, char* argv[])
         }
     }
 
-    //pointsView->setSelectionMode(QAbstractItemView::SingleSelection);
-    pointsModel->printTree(pointsModel->getRoot());
-    /*
-        qDebug() << " \n\n__MAP__";
-        for (auto i : hNode) {
-            qDebug() << "~val" << i->val << i->children.size();
+    FileModel::connect(pointsView, &QTreeView::clicked, &w, [&](const QModelIndex& index) {
+        QString t = index.data().toString();
+        //rowI = index.row();
+        infoLabel->setText(QString("Ви клікнули: [%1, %2] = %3")
+                               .arg(index.row())
+                               .arg(index.column())
+                               .arg(t));
+        //updateHLT(cursor, rowI, fmt);
+        QString poitnText = parts.poinText(fileName,t);
+        text->setText(poitnText);
+    });
 
-            if (i->val == "root")
-                continue;
-
-            auto* point = new QStandardItem;
-            point->setData(i->val, Qt::DisplayRole);
-            if (i->parent->val == "root") {
-                parentItem->appendRow(point);
-                qDebug() << "inROOT" << i->val << " p: " << i->parent->val;
-            } else {
-
-                auto p = pointsModel->findItems(i->parent->val, Qt::MatchRecursive);
-                if (p.empty()) {
-                    qDebug() << "EMPTY" << i->val << i->parent->val;
-
-                } else {
-                    qDebug() << "checkVAL" << i->val;
-                    for (auto l : p)
-                        qDebug() << l->text();
-                    p.first()->appendRow(point);
-                }
-    }
-        }
-
-        int rowI = 0;
-
-        auto it = hNode.find(parentItem->child(2)->text());
-        QString res;
-        Section r;
-        for (auto i : fpData.pointsData) {
-            if (i.marker == it.key())
-                r = i;
-        }
-
-        text->setText(r.title + r.text);
-        text->setReadOnly(true);
-        auto fmt = new QTextCharFormat;
-        fmt->setBackground(QColor("lightblue"));
-        auto cursor = new QTextCursor(text->document());
-
-        updateHLT(cursor, 40, fmt);
-        // text->setHtml(html);
-
-        qDebug() << "\n~~~END~~~";
-        FileModel::connect(pointsView, &QTreeView::clicked, &w, [&](const QModelIndex& index) {
-            QString text = index.data().toString();
-            rowI = index.row();
-            infoLabel->setText(QString("Ви клікнули: [%1, %2] = %3")
-                    .arg(index.row())
-                    .arg(index.column())
-                    .arg(text));
-
-            updateHLT(cursor, rowI, fmt);
-        });
-    */
     return a.exec();
 }
-
-void updateHLT(QTextCursor* cursor, int rowI, QTextCharFormat* fmt)
-{
-    // Define the start and end positions for highlighting
-    cursor->deleteChar();
-    int begin = rowI; // Start of "sample"
-    int end = 21; // End of "sample"
-
-    // Move the cursor and select the text
-    cursor->setPosition(begin, QTextCursor::MoveAnchor);
-    cursor->setPosition(end, QTextCursor::KeepAnchor);
-
-    // Apply the format
-    cursor->setCharFormat(*fmt);
-};
