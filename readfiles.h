@@ -47,7 +47,7 @@ class ReadFiles {
 public:
     ReadFiles();
 
-    void collectFiles();
+    void collectFiles(const QString& lastStem, const QString& firstStem, const QString& patrStem);
     FileResult processFile(const QFileInfo& fi,
         const QString& lastStem,
         const QString& firstStem,

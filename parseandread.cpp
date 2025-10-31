@@ -9,7 +9,7 @@ ParseAndRead::ParseAndRead()
 
 int ParseAndRead::parse(QString& fileName)
 {
-    QString path = "C:/Users/svyat/Desktop/Syava_stroyova/converted/DocToTxt/" + fileName;
+    QString path = "C:/Users/svyat/Desktop/Syava_stroyova/convTest/DocToTxt/" + fileName;
 
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))

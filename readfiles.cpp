@@ -5,15 +5,15 @@
 
 QString rootDir = R"(C:\Users\svyat\Desktop\Syava_stroyova\converted\DocToTxt)";
 
-QString lastStem = ("Пурс");
-QString firstStem = ("");
-QString patrStem = ("Ігор");
+// QString lastStem = ("Гарап");
+// QString firstStem = ("");
+// QString patrStem = ("");
 
 ReadFiles::ReadFiles()
 {
 }
 
-void ReadFiles::collectFiles()
+void ReadFiles::collectFiles(const QString& lastStem, const QString& firstStem, const QString& patrStem)
 {
     // Collect files
     QList<QFileInfo> files;
