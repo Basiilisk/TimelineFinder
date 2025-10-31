@@ -2,14 +2,13 @@
 
 PointsModel::PointsModel(QObject* parent)
     : QAbstractItemModel(parent)
-    , root(new TreeItem("root"))
 {
 }
 
-PointsModel::~PointsModel()
-{
-    delete root;
-}
+// PointsModel::~PointsModel()
+// {
+//     delete root;
+// }
 
 QModelIndex PointsModel::index(int row, int column, const QModelIndex& parent) const
 {
@@ -41,16 +40,15 @@ QModelIndex PointsModel::parent(const QModelIndex& child) const
 
 int PointsModel::rowCount(const QModelIndex& parent) const
 {
-    if (parent.isValid() && parent.column() > 0)
-        return 0;
+    TreeItem* parentItem = itemFromIndex(parent);
+    if (!parentItem)
+        parentItem = root;
 
-    TreeItem* p = itemFromIndex(parent);
-    return p->childCount();
+    return parentItem ? parentItem->childCount() : 0;
 }
 
 int PointsModel::columnCount(const QModelIndex& parent) const
 {
-    Q_UNUSED(parent);
     return 1;
 }
 

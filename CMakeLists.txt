@@ -16,6 +16,8 @@ qt_add_executable(TimelineFinder
     textmodel.h textmodel.cpp
     treeitem.h treeitem.cpp
     parseandread.h parseandread.cpp
+    readfiles.h readfiles.cpp
+    treeitemcache.h treeitemcache.cpp
 )
 
 target_link_libraries(TimelineFinder

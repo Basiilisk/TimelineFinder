@@ -94,15 +94,14 @@ class ParseAndRead {
 public:
     ParseAndRead();
 
-    void parse(QString& fileName, QString& rawText);
+    int parse(QString& fileName);
 
     QString poinText(QString& key, QString val);
     QVector<Section> pointData(QString& key);
     QVector<QString> filesName();
-    QMap<QString, QVector<Section>>& filePoint();
+    QHash<QString, QVector<Section>>& filePoint();
+    void clearAll();
 
 private:
-    QString fileName;
-    QVector<Section> pointsData;
-    QMap<QString, QVector<Section>> filePoints;
+    QHash<QString, QVector<Section>> filePoints;
 };

@@ -9,7 +9,16 @@ class PointsModel : public QAbstractItemModel {
     Q_OBJECT
 public:
     explicit PointsModel(QObject* parent = nullptr);
-    ~PointsModel() override;
+    ~PointsModel() override = default;
+    //~PointsModel() override;
+
+    void setBorrowedRoot(TreeItem* currentRoot)
+    {
+        beginResetModel();
+        root = currentRoot;
+        qDebug() << currentRoot;
+        endResetModel();
+    }
 
     // --- must-have ---
     QModelIndex index(int row, int column, const QModelIndex& parent) const override;
@@ -31,5 +40,5 @@ public:
     void printTree(TreeItem* parent);
 
 private:
-    TreeItem* root;
+    TreeItem* root = nullptr;
 };

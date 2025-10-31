@@ -1,15 +1,36 @@
 #include "parseandread.h"
 
+#include <QFile>
+#include <QIODevice>
+
 ParseAndRead::ParseAndRead()
 {
 }
 
-void ParseAndRead::parse(QString& fileName, QString& rawText)
+int ParseAndRead::parse(QString& fileName)
 {
+    QString path = "C:/Users/svyat/Desktop/Syava_stroyova/converted/DocToTxt/" + fileName;
+
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "Error: can't open file:" << fileName;
+        return -1;
+    }
+
+    QString rawText;
+    QTextStream ts(&f);
+    ts.setEncoding(QStringConverter::Utf8);
+    while (!ts.atEnd()) {
+        rawText = ts.readAll();
+    }
+
     QVector<QString> allTexts;
     QVector<Section> parts = splitByPoints(rawText, &allTexts);
 
     filePoints.insert(fileName, parts);
+
+    return 0;
 }
 
 QString ParseAndRead::poinText(QString& key, QString val)
@@ -33,7 +54,12 @@ QVector<QString> ParseAndRead::filesName()
     return filePoints.keys();
 }
 
-QMap<QString, QVector<Section>>& ParseAndRead::filePoint()
+QHash<QString, QVector<Section>>& ParseAndRead::filePoint()
 {
     return filePoints;
+}
+
+void ParseAndRead::clearAll()
+{
+    filePoints.clear();
 }

@@ -20,10 +20,55 @@
 #include "filemodel.h"
 #include "parseandread.h"
 #include "pointsmodel.h"
+#include "readfiles.h"
 #include "textmodel.h"
 #include "treeitem.h"
+#include "treeitemcache.h"
 
 void updateHLT(QTextCursor* cursor, int rowI, QTextCharFormat* fmt);
+
+void clickedDocksView(PointsModel* pointsModel, ParseAndRead* parts, FileModel* fileModel)
+{
+    auto* parentItem = pointsModel->getRoot();
+
+    for (auto fileName : parts->filesName()) {
+        fileModel->appendRow(new QStandardItem(fileName));
+
+        for (auto points : parts->pointData(fileName)) {
+            int dotCount = points.marker.count('.');
+            int depth = dotCount - 1; // subtract the final dot
+            QString indent(depth * 4, ' '); // 4 spaces per level
+
+            // qDebug() << "INFO:" << points.marker << dotCount << depth;
+            QString val = points.marker;
+            auto it = pointsModel->find(parentItem, val);
+            if (it == nullptr) {
+
+                QString s = val;
+                bool find = false;
+                while (s.count('.') > 1) {
+                    s = shortenPath(s);
+                    auto itS = pointsModel->find(parentItem, s);
+                    if (itS != nullptr) {
+                        qDebug() << "Parent" << itS->data().toString() << " for " << val;
+                        itS->appendChild(val);
+                        find = true;
+                        break;
+                    }
+                }
+
+                if (!find)
+                    parentItem->appendChild(val);
+
+            } else {
+                qDebug() << "\n\nError val it's already exist:" << val;
+                // return -1;
+            }
+
+            // qDebug() << points.marker;
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -86,7 +131,7 @@ int main(int argc, char* argv[])
 
     QTreeView* pointsView = new QTreeView();
     pointsView->setModel(pointsModel);
-    // pointsView->setRootIsDecorated(true);
+    pointsView->setRootIsDecorated(true);
     pointsView->setAlternatingRowColors(true);
 
     QTextEdit* text = new QTextEdit(mainW);
@@ -108,63 +153,36 @@ int main(int argc, char* argv[])
 
     //===========================================================================================
     QString fileName = "00____myShityTestFile____00.txt";
-    QString path = "C:/Users/svyat/Desktop/Syava_stroyova/converted/DocToTxt/" + fileName;
-
-    QString rawText;
-
-    QFile f(path);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-        return -1;
-
-    QTextStream ts(&f);
-    ts.setEncoding(QStringConverter::Utf8);
-    while (!ts.atEnd()) {
-        rawText = ts.readAll();
-    }
 
     //===========================================================================================
-    ParseAndRead parts;
+    ParseAndRead* parts = new ParseAndRead;
 
-    parts.parse(fileName, rawText);
-    auto sections = parts.pointData(fileName);
+    TreeItemCache cache;
 
-    // Example: print IDs and first 40 chars of each chunk
-    for (const auto& s : sections) {
-        qDebug().noquote() << s.id << "marker= " << s.marker
-                           << " title=" << s.title
-                           << "   preview=" << s.text.left(400).replace('\n', ' ');
+    ReadFiles readFiles;
+    readFiles.collectFiles();
+    auto d = readFiles.result();
+    for (auto i : d) {
+        qDebug() << "INFO:::" << i.fileName;
+        // parts->parse(i.fileName, rawText);
+        parts->parse(i.fileName);
+        cache.put(i.fileName);
     }
+    // parts->parse(fileName);
+    // cache.put(fileName);
 
-    //===========================================================================================
-    QString outText;
-
-    for (const auto& s : sections) {
-        outText += s.marker + " ID: " + s.id + "\nTITLE:" + s.title + "\nTEXT:\n" + s.text + "\n";
-    }
-
-    QString outPath = QDir::currentPath() + "/OUT.txt";
-    QFile out(outPath);
-    if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Cannot write:" << outPath;
-        return -1;
-    }
-    QTextStream tsOut(&out);
-    tsOut.setEncoding(QStringConverter::Utf8);
-    tsOut << outText;
-    tsOut.flush();
-    out.close();
-
-    auto* parentItem = pointsModel->getRoot();
-
-    for (auto fileName : parts.filesName()) {
+    for (auto fileName : parts->filesName()) {
         fileModel->appendRow(new QStandardItem(fileName));
 
-        for (auto points : parts.pointData(fileName)) {
+        pointsModel->setBorrowedRoot(cache.getRaw(fileName));
+        auto* parentItem = pointsModel->getRoot();
+
+        for (auto points : parts->pointData(fileName)) {
             int dotCount = points.marker.count('.');
             int depth = dotCount - 1; // subtract the final dot
             QString indent(depth * 4, ' '); // 4 spaces per level
 
-            //qDebug() << "INFO:" << points.marker << dotCount << depth;
+            // qDebug() << "INFO:" << points.marker << dotCount << depth;
             QString val = points.marker;
             auto it = pointsModel->find(parentItem, val);
             if (it == nullptr) {
@@ -187,24 +205,46 @@ int main(int argc, char* argv[])
 
             } else {
                 qDebug() << "\n\nError val it's already exist:" << val;
-                return -1;
+                // return -1;
             }
 
             // qDebug() << points.marker;
         }
     }
 
+    pointsModel->setBorrowedRoot(cache.getRaw(fileName));
+
+
+    QObject::connect(fileView->selectionModel(), &QItemSelectionModel::currentChanged,
+        fileView, [&](const QModelIndex& cur, const QModelIndex& pre) {
+            // rowI = index.row();
+            infoLabel->setText(QString("Ви клікнули fileView: [%1, %2] = %3")
+                    .arg(cur.row())
+                    .arg(cur.column())
+                    .arg(cur.data().toString()));
+            // clickedDocksView(pointsModel, parts, fileModel);
+
+            const QString path = fileModel->data(cur).toString();
+            if (path.isEmpty())
+                return;
+
+            // береш із твого кеша і просто показуєш
+            if (TreeItem* root = cache.getRaw(path)) { // cache: std::unordered_map<QString, unique_ptr<TreeItem>>
+                pointsModel->setBorrowedRoot(root); // модель НЕ володіє root
+                //pointsView->expandToDepth(1); // опційно
+            }
+        });
+
     FileModel::connect(pointsView, &QTreeView::clicked, &w, [&](const QModelIndex& index) {
-        QString t = index.data().toString();
-        //rowI = index.row();
-        infoLabel->setText(QString("Ви клікнули: [%1, %2] = %3")
-                               .arg(index.row())
-                               .arg(index.column())
-                               .arg(t));
-        //updateHLT(cursor, rowI, fmt);
-        QString poitnText = parts.poinText(fileName,t);
+        QString key = fileView->currentIndex().data().toString();
+        QString poitnText = parts->poinText(key, index.data().toString());
         text->setText(poitnText);
     });
+
+    if (fileModel->rowCount() > 0) {
+        auto first = fileModel->index(0,0);
+        fileView->setCurrentIndex(first);
+    }
 
     return a.exec();
 }
