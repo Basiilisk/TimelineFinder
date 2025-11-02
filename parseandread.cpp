@@ -3,13 +3,15 @@
 #include <QFile>
 #include <QIODevice>
 
+#include "Pathes.h"
+
 ParseAndRead::ParseAndRead()
 {
 }
 
 int ParseAndRead::parse(QString& fileName)
 {
-    QString path = "C:/Users/svyat/Desktop/Syava_stroyova/convTest/DocToTxt/" + fileName;
+    QString path = rootDir + fileName;
 
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(TimelineFinder LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets WebEngineWidgets)
 
 qt_standard_project_setup()
 
@@ -18,12 +18,15 @@ qt_add_executable(TimelineFinder
     parseandread.h parseandread.cpp
     readfiles.h readfiles.cpp
     treeitemcache.h treeitemcache.cpp
+    outlinewebview.h outlinewebview.cpp
+    Pathes.h
 )
 
 target_link_libraries(TimelineFinder
     PRIVATE
         Qt::Core
-        Qt::Widgets
+        Qt6::Widgets
+        Qt6::WebEngineWidgets
 )
 
 include(GNUInstallDirs)

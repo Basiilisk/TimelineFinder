@@ -3,7 +3,7 @@
 #include <QDirIterator>
 #include <QRegularExpression>
 
-QString rootDir = R"(C:\Users\svyat\Desktop\Syava_stroyova\converted\DocToTxt)";
+#include "Pathes.h"
 
 // QString lastStem = ("Гарап");
 // QString firstStem = ("");

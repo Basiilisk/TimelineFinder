@@ -28,7 +28,7 @@
 
 void updateHLT(QTextCursor* cursor, int rowI, QTextCharFormat* fmt);
 
-void clickedDocksView(ParseAndRead* parts, TreeItemCache* cache, ReadFiles* readFiles, PointsModel* pointsModel, FileModel* fileModel, const QString& lastStem, const QString& firstStem, const QString& patrStem)
+void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* cache, ReadFiles* readFiles, PointsModel* pointsModel, FileModel* fileModel, const QString& lastStem, const QString& firstStem, const QString& patrStem)
 {
     readFiles->collectFiles(lastStem, firstStem, patrStem);
     auto d = readFiles->result();
@@ -80,6 +80,11 @@ void clickedDocksView(ParseAndRead* parts, TreeItemCache* cache, ReadFiles* read
 
             // qDebug() << points.marker;
         }
+    }
+
+    if (fileModel->rowCount() > 0) {
+        auto first = fileModel->index(0, 0);
+        fileView->setCurrentIndex(first);
     }
 }
 
@@ -134,15 +139,16 @@ int main(int argc, char* argv[])
     QHBoxLayout* nameEditLayout = new QHBoxLayout();
     vLayout->addLayout(nameEditLayout);
 
+    auto* lastName = new QLineEdit("Пу");
     auto* firstName = new QLineEdit();
-    auto* lastName = new QLineEdit();
-    auto* patronymicName = new QLineEdit();
-    nameEditLayout->addWidget(firstName);
+    auto* patronymicName = new QLineEdit("Ігор");
+
     nameEditLayout->addWidget(lastName);
+    nameEditLayout->addWidget(firstName);
     nameEditLayout->addWidget(patronymicName);
 
-    firstName->setPlaceholderText("First Name");
     lastName->setPlaceholderText("Last Name");
+    firstName->setPlaceholderText("First Name");
     patronymicName->setPlaceholderText("Patronymic Name");
 
     auto* updateButt = new QPushButton("UPDATE");
@@ -163,7 +169,7 @@ int main(int argc, char* argv[])
         if (firstName->text().isEmpty() && lastName->text().isEmpty() && patronymicName->text().isEmpty())
             qDebug() << "\nSORRY all empty";
         qDebug() << firstName->text() << lastName->text() << patronymicName->text();
-        clickedDocksView(parts, cache, readFiles, pointsModel, fileModel, lastName->text(), firstName->text(), patronymicName->text());
+        updateTreeView(fileView, parts, cache, readFiles, pointsModel, fileModel, lastName->text(), firstName->text(), patronymicName->text());
     });
 
     QObject::connect(fileView->selectionModel(), &QItemSelectionModel::currentChanged,
@@ -180,14 +186,13 @@ int main(int argc, char* argv[])
 
     QObject::connect(pointsView, &QTreeView::clicked, &w, [&](const QModelIndex& index) {
         QString key = fileView->currentIndex().data().toString();
+        if (key == "") {
+            key = fileView->indexAt({ fileView->currentIndex().row(), 0 }).data().toString();
+        }
+
         QString poitnText = parts->poinText(key, index.data().toString());
         text->setText(poitnText);
     });
-
-    // if (fileModel->rowCount() > 0) {
-    //     auto first = fileModel->index(0, 0);
-    //     fileView->setCurrentIndex(first);
-    // }
 
     return a.exec();
 }
