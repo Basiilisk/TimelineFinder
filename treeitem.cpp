@@ -1,7 +1,8 @@
 #include "treeitem.h"
 
-TreeItem::TreeItem(QString v, TreeItem* m_parent)
+TreeItem::TreeItem(QString v, QString name, TreeItem* m_parent)
     : val(std::move(v))
+    , name(name)
     , m_parent(m_parent)
 {
 }
@@ -58,9 +59,15 @@ bool TreeItem::setData(const QVariant& v)
     return true;
 }
 
-TreeItem* TreeItem::appendChild(QString val)
+bool TreeItem::hasName(QString& n) const
 {
-    m_children.push_back(std::make_unique<TreeItem>(std::move(val), this));
+    n = name;
+    return !name.isEmpty();
+}
+
+TreeItem* TreeItem::appendChild(QString val, QString name)
+{
+    m_children.push_back(std::make_unique<TreeItem>(std::move(val), name, this));
     return m_children.back().get();
 }
 

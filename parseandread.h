@@ -10,6 +10,7 @@ struct Section {
     int start = 0; // content start (after marker)
     int end = 0; // content end (before next marker or end of text)
     QString text; // extracted text between this marker and the next
+    QString name;
 
     bool operator==(const QString& sec) const
     {
@@ -26,7 +27,7 @@ static QRegularExpression kPointRe(
 
 // Split text into sections between point markers.
 // allTextsOut will contain just the raw chunk texts if you want a simple vector.
-static QVector<Section> splitByPoints(const QString& text, QVector<QString>* allTextsOut = nullptr)
+static QVector<Section> splitByPoints(const QString& lastStem, const QString& firstStem, const QString& patrStem, const QString& text, QVector<QString>* allTextsOut = nullptr)
 {
     QVector<Section> sections;
     QVector<QPair<int, QRegularExpressionMatch>> hits;
@@ -66,6 +67,33 @@ static QVector<Section> splitByPoints(const QString& text, QVector<QString>* all
         s.end = qMax(markerEnd, nextStart);
         s.text = text.mid(s.start, s.end - s.start).trimmed();
 
+        QVector<QPair<QString, QPair<int, int>>> tokens;
+
+        auto it = QRegularExpression(R"((\p{Cyrillic}[\p{Cyrillic}'’\-]+))",
+            QRegularExpression::CaseInsensitiveOption)
+                      .globalMatch(s.title + s.text);
+        while (it.hasNext()) {
+            auto m = it.next();
+            tokens.push_back({ m.captured(1), { m.capturedStart(), m.capturedEnd() } });
+        }
+
+        const QString Ls = lastStem.toCaseFolded();
+        const QString Fs = firstStem.toCaseFolded();
+        const QString Ps = patrStem.toCaseFolded();
+
+        for (int i = 0; i + 2 < tokens.size(); ++i) {
+            const QString& w1 = tokens[i].first;
+            const QString& w2 = tokens[i + 1].first;
+            const QString& w3 = tokens[i + 2].first;
+            const bool ok1 = Ls.isEmpty() || w1.toCaseFolded().startsWith(Ls);
+            const bool ok2 = Fs.isEmpty() || w2.toCaseFolded().startsWith(Fs);
+            const bool ok3 = Ps.isEmpty() || w3.toCaseFolded().startsWith(Ps);
+            if (ok1 && ok2 && ok3) {
+                s.name = w1 + " " + w2 + " " + w3;
+                qDebug() << "|!!!| NAME: " << s.name;
+            }
+        }
+
         sections.push_back(std::move(s));
     }
 
@@ -94,7 +122,7 @@ class ParseAndRead {
 public:
     ParseAndRead();
 
-    int parse(QString& fileName);
+    int parse(const QString& lastStem, const QString& firstStem, const QString& patrStem, QString& fileName);
 
     QString poinText(QString& key, QString val);
     QVector<Section> pointData(QString& key);

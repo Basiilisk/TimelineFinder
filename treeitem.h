@@ -7,7 +7,7 @@
 class TreeItem {
 
 public:
-    explicit TreeItem(QString val, TreeItem* parent = nullptr);
+    explicit TreeItem(QString val, QString name = "", TreeItem* parent = nullptr);
 
     TreeItem(const TreeItem&) = delete;
     TreeItem& operator=(const TreeItem&) = delete;
@@ -23,8 +23,9 @@ public:
 
     QVariant data() const;
     bool setData(const QVariant& v);
+    bool hasName(QString& n) const;
 
-    TreeItem* appendChild(QString val);
+    TreeItem* appendChild(QString val, QString name = "");
 
     bool removeChild(int row);
     // Забрати дитину (передати власність нагору/назовні)
@@ -35,6 +36,7 @@ public:
     void clear();
 
 private:
+    QString name;
     QString val;
     std::vector<std::unique_ptr<TreeItem>> m_children;
     TreeItem* m_parent = nullptr;

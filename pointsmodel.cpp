@@ -1,5 +1,7 @@
 #include "pointsmodel.h"
 
+#include <QBrush>
+
 PointsModel::PointsModel(QObject* parent)
     : QAbstractItemModel(parent)
 {
@@ -59,11 +61,27 @@ QVariant PointsModel::data(const QModelIndex& index, int role) const
         return {};
 
     auto* item = itemFromIndex(index);
+    QString name;
+    bool hasName = item->hasName(name);
+
+    if (role == Qt::BackgroundRole) {
+        if (hasName)
+            return QBrush(QColor("#e0f7fa")); // light cyan for first column
+    }
+
+    // --- Text color example ---
+    if (role == Qt::ForegroundRole) {
+        if (hasName)
+            return QBrush(QColor(Qt::red)); // teal text
+    }
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
-        if (index.column() == 1)
+        if (index.column() == 1) {
+            if (hasName)
+                return name;
             return " -#- ";
-        else
+
+        } else
             return item->data();
     }
     return {};

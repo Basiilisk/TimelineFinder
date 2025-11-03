@@ -9,13 +9,12 @@ ParseAndRead::ParseAndRead()
 {
 }
 
-int ParseAndRead::parse(QString& fileName)
+int ParseAndRead::parse(const QString& lastStem, const QString& firstStem, const QString& patrStem, QString& fileName)
 {
     QString path = rootDir + fileName;
 
     QFile f(path);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Error: can't open file:" << fileName;
         return -1;
     }
@@ -28,7 +27,7 @@ int ParseAndRead::parse(QString& fileName)
     }
 
     QVector<QString> allTexts;
-    QVector<Section> parts = splitByPoints(rawText, &allTexts);
+    QVector<Section> parts = splitByPoints(lastStem, firstStem, patrStem, rawText, &allTexts);
 
     filePoints.insert(fileName, parts);
 

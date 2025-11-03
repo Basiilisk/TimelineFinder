@@ -21,6 +21,7 @@
 #include "filemodel.h"
 #include "parseandread.h"
 #include "pointsmodel.h"
+#include "pointsview.h"
 #include "readfiles.h"
 #include "textmodel.h"
 #include "treeitem.h"
@@ -35,7 +36,7 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
     for (auto i : d) {
         qDebug() << "INFO:::" << i.fileName;
         // parts->parse(i.fileName, rawText);
-        parts->parse(i.fileName);
+        parts->parse(lastStem, firstStem, patrStem, i.fileName);
         cache->put(i.fileName);
     }
     // parts->parse(fileName);
@@ -54,6 +55,7 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
 
             // qDebug() << "INFO:" << points.marker << dotCount << depth;
             QString val = points.marker;
+            QString name = points.name;
             auto it = pointsModel->find(parentItem, val);
             if (it == nullptr) {
 
@@ -64,14 +66,14 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
                     auto itS = pointsModel->find(parentItem, s);
                     if (itS != nullptr) {
                         qDebug() << "Parent" << itS->data().toString() << " for " << val;
-                        itS->appendChild(val);
+                        itS->appendChild(val, name);
                         find = true;
                         break;
                     }
                 }
 
                 if (!find)
-                    parentItem->appendChild(val);
+                    parentItem->appendChild(val, name);
 
             } else {
                 qDebug() << "\n\nError val it's already exist:" << val;
@@ -121,7 +123,7 @@ int main(int argc, char* argv[])
     fileView->setModel(fileModel);
     fileView->setAlternatingRowColors(true);
 
-    QTreeView* pointsView = new QTreeView();
+    RowBandTreeView* pointsView = new RowBandTreeView();
     pointsView->setModel(pointsModel);
     pointsView->setRootIsDecorated(true);
     pointsView->setAlternatingRowColors(true);
@@ -184,7 +186,7 @@ int main(int argc, char* argv[])
             }
         });
 
-    QObject::connect(pointsView, &QTreeView::clicked, &w, [&](const QModelIndex& index) {
+    QObject::connect(pointsView, &RowBandTreeView::clicked, &w, [&](const QModelIndex& index) {
         QString key = fileView->currentIndex().data().toString();
         if (key == "") {
             key = fileView->indexAt({ fileView->currentIndex().row(), 0 }).data().toString();

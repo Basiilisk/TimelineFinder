@@ -20,6 +20,7 @@ qt_add_executable(TimelineFinder
     treeitemcache.h treeitemcache.cpp
     outlinewebview.h outlinewebview.cpp
     Pathes.h
+    pointsview.h pointsview.cpp
 )
 
 target_link_libraries(TimelineFinder
