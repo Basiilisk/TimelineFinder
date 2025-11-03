@@ -190,7 +190,10 @@ int main(int argc, char* argv[])
             key = fileView->indexAt({ fileView->currentIndex().row(), 0 }).data().toString();
         }
 
-        QString poitnText = parts->poinText(key, index.data().toString());
+        auto in = index.siblingAtColumn(0).data().toString();
+        qDebug() << "pointsView: " << in;
+
+        QString poitnText = parts->poinText(key, in);
         text->setText(poitnText);
     });
 

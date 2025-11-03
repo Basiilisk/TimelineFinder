@@ -49,18 +49,22 @@ int PointsModel::rowCount(const QModelIndex& parent) const
 
 int PointsModel::columnCount(const QModelIndex& parent) const
 {
-    return 1;
+    Q_UNUSED(parent);
+    return 2;
 }
 
 QVariant PointsModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.column() != 0)
+    if (!index.isValid())
         return {};
 
     auto* item = itemFromIndex(index);
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
-        return item->data();
+        if (index.column() == 1)
+            return " -#- ";
+        else
+            return item->data();
     }
     return {};
 }
@@ -76,7 +80,14 @@ Qt::ItemFlags PointsModel::flags(const QModelIndex& index) const
 QVariant PointsModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-        return QVariant("Points");
+        switch (section) {
+        case 0:
+            return "Point ID"; // column 0
+        case 1:
+            return "Name"; // column 1
+        default:
+            return {};
+        }
     }
     return {};
 }
