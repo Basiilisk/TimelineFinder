@@ -7,6 +7,11 @@ PointsModel::PointsModel(QObject* parent)
 {
 }
 
+QModelIndex PointsModel::rootIndex()
+{
+    return createIndex(0, 0, root);
+}
+
 // PointsModel::~PointsModel()
 // {
 //     delete root;
@@ -61,18 +66,21 @@ QVariant PointsModel::data(const QModelIndex& index, int role) const
         return {};
 
     auto* item = itemFromIndex(index);
+
+    qDebug() << ">item:" << item << " index:" << index;
+
     QString name;
     bool hasName = item->hasName(name);
 
     if (role == Qt::BackgroundRole) {
         if (hasName)
-            return QBrush(QColor("#e0f7fa")); // light cyan for first column
+            return QBrush(QColor("#e0f7fa"));
     }
 
     // --- Text color example ---
     if (role == Qt::ForegroundRole) {
         if (hasName)
-            return QBrush(QColor(Qt::red)); // teal text
+            return QBrush(QColor(Qt::black));
     }
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {

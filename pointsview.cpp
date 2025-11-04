@@ -3,8 +3,7 @@
 void RowBandTreeView::drawRow(QPainter* p, const QStyleOptionViewItem& opt, const QModelIndex& idx) const
 {
     // Ask the model for a background brush (per-row, column 0)
-    const QModelIndex row0 = idx.sibling(idx.row(), 0);
-    const QVariant bgv = row0.data(Qt::BackgroundRole);
+    const QVariant bgv = idx.data(Qt::BackgroundRole);
     if (bgv.canConvert<QBrush>()) {
         const QBrush brush = qvariant_cast<QBrush>(bgv);
 

@@ -38,6 +38,7 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
         // parts->parse(i.fileName, rawText);
         parts->parse(lastStem, firstStem, patrStem, i.fileName);
         cache->put(i.fileName);
+        cache->putFound(i.fileName);
     }
     // parts->parse(fileName);
     // cache.put(fileName);
@@ -47,6 +48,7 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
 
         pointsModel->setBorrowedRoot(cache->getRaw(fileName));
         auto* parentItem = pointsModel->getRoot();
+        auto* parentFoundRoot = cache->getRawFound(fileName);
 
         for (auto points : parts->pointData(fileName)) {
             int dotCount = points.marker.count('.');
@@ -56,6 +58,10 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
             // qDebug() << "INFO:" << points.marker << dotCount << depth;
             QString val = points.marker;
             QString name = points.name;
+
+            if (!name.isEmpty())
+                parentFoundRoot->appendChild(val, name);
+
             auto it = pointsModel->find(parentItem, val);
             if (it == nullptr) {
 
@@ -156,6 +162,17 @@ int main(int argc, char* argv[])
     auto* updateButt = new QPushButton("UPDATE");
     vLayout->addWidget(updateButt);
 
+    QPushButton* toggle = new QPushButton("SHOW ONLY FOUNDED");
+    toggle->setCheckable(true);
+    vLayout->addWidget(toggle);
+
+    auto* pointLabel = new QLineEdit("1.");
+    pointLabel->setPlaceholderText("Skroll to the point");
+    vLayout->addWidget(pointLabel);
+
+    QPushButton* jumpPointButt = new QPushButton("Jump to the point");
+    vLayout->addWidget(jumpPointButt);
+
     w.show();
 
     //===========================================================================================
@@ -180,7 +197,7 @@ int main(int argc, char* argv[])
             if (path.isEmpty())
                 return;
 
-            if (TreeItem* root = cache->getRaw(path)) { // cache: std::unordered_map<QString, unique_ptr<TreeItem>>
+            if (TreeItem* root = cache->getRawSwither(path, (toggle->text() == "SHOW ONLY FOUNDED"))) { // cache: std::unordered_map<QString, unique_ptr<TreeItem>>
                 pointsModel->setBorrowedRoot(root); // модель НЕ володіє root
                 // pointsView->expandToDepth(1); // опційно
             }
@@ -197,6 +214,40 @@ int main(int argc, char* argv[])
 
         QString poitnText = parts->poinText(key, in);
         text->setText(poitnText);
+    });
+
+    QObject::connect(toggle, &QPushButton::toggled, &w, [&](bool enabled) {
+        if (enabled) {
+            toggle->setText("SHOW ALL LIST");
+            pointsView->update();
+        } else {
+            toggle->setText("SHOW ONLY FOUNDED");
+            pointsView->update();
+        }
+    });
+
+    QObject::connect(jumpPointButt, &QPushButton::clicked, &w, [&](bool checked) {
+        if (pointsModel->getRoot() == nullptr)
+            return;
+
+        QModelIndexList matches = pointsModel->match(
+            pointsModel->rootIndex(), // start search
+            Qt::DisplayRole,
+            pointLabel->text(), // text to find
+            1, // stop after 1 match
+            Qt::MatchRecursive | Qt::MatchExactly);
+
+        if (!matches.isEmpty()) {
+            qDebug() << "\n~~FOUND point: " << pointLabel->text();
+            QModelIndex idx = matches.first();
+            pointsView->expand(idx.parent()); // open the parent
+            pointsView->scrollTo(idx);
+            pointsView->setCurrentIndex(idx);
+            pointsView->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        }
+
+        else
+            qDebug() << "\n~~CANT FOUND point: " << pointLabel->text();
     });
 
     return a.exec();
