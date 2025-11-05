@@ -22,6 +22,7 @@ public:
     int row() const; // індекс серед братів (для QAbstractItemModel::parent)
 
     QVariant data() const;
+    QString getName() const;
     bool setData(const QVariant& v);
     bool hasName(QString& n) const;
 

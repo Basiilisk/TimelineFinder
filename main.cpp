@@ -29,6 +29,48 @@
 
 void updateHLT(QTextCursor* cursor, int rowI, QTextCharFormat* fmt);
 
+void allActivate(bool isActivate, QPushButton* b1, QPushButton* b2, QPushButton* b3, QPushButton* b4, QPushButton* b5)
+{
+    b1->setEnabled(isActivate);
+    b2->setEnabled(isActivate);
+    b3->setEnabled(isActivate);
+    b4->setEnabled(isActivate);
+    b5->setEnabled(isActivate);
+}
+
+QString currentFileViewName(QTableView* fileView)
+{
+    QString key = fileView->currentIndex().data().toString();
+    if (key == "") {
+        key = fileView->indexAt({ fileView->currentIndex().row(), 0 }).data().toString();
+    }
+
+    return key;
+}
+
+void jumpToPoint(PointsModel* pointsModel, RowBandTreeView* pointsView, QString point)
+{
+    QModelIndexList matches = pointsModel->match(
+        pointsModel->rootIndex(), // start search
+        Qt::DisplayRole,
+        point, // text to find
+        1, // stop after 1 match
+        Qt::MatchRecursive | Qt::MatchExactly);
+
+    if (!matches.isEmpty()) {
+        qDebug() << "\n~~FOUND point: " << point;
+        QModelIndex idx = matches.first();
+        pointsView->expand(idx.parent()); // open the parent
+        pointsView->scrollTo(idx);
+        pointsView->setCurrentIndex(idx);
+        pointsView->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        pointsView->clicked(idx);
+    }
+
+    else
+        qDebug() << "\n~~CANT FOUND point: " << point;
+}
+
 void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* cache, ReadFiles* readFiles, PointsModel* pointsModel, FileModel* fileModel, const QString& lastStem, const QString& firstStem, const QString& patrStem)
 {
     readFiles->collectFiles(lastStem, firstStem, patrStem);
@@ -44,11 +86,11 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
     // cache.put(fileName);
 
     for (auto fileName : parts->filesName()) {
-        fileModel->appendRow(new QStandardItem(fileName));
-
         pointsModel->setBorrowedRoot(cache->getRaw(fileName));
         auto* parentItem = pointsModel->getRoot();
         auto* parentFoundRoot = cache->getRawFound(fileName);
+
+        fileModel->appendRow({ new QStandardItem(fileName), new QStandardItem() });
 
         for (auto points : parts->pointData(fileName)) {
             int dotCount = points.marker.count('.');
@@ -121,6 +163,7 @@ int main(int argc, char* argv[])
 
     FileModel* fileModel = new FileModel(mainW);
     fileModel->setHorizontalHeaderItem(0, new QStandardItem("Name File"));
+    fileModel->setHorizontalHeaderItem(1, new QStandardItem("Points with name"));
 
     PointsModel* pointsModel = new PointsModel(mainW);
     // pointsModel->setHorizontalHeaderItem(0, new QStandardItem("Points"));
@@ -173,6 +216,19 @@ int main(int argc, char* argv[])
     QPushButton* jumpPointButt = new QPushButton("Jump to the point");
     vLayout->addWidget(jumpPointButt);
 
+    QHBoxLayout* movePointsLayout = new QHBoxLayout();
+    vLayout->addLayout(movePointsLayout);
+
+    auto* prevButt = new QPushButton("PREV");
+    auto* currButt = new QPushButton("CURRENT");
+    auto* nextButt = new QPushButton("NEXT");
+
+    movePointsLayout->addWidget(prevButt);
+    movePointsLayout->addWidget(currButt);
+    movePointsLayout->addWidget(nextButt);
+
+    allActivate(false, toggle, jumpPointButt, prevButt, currButt, nextButt);
+
     w.show();
 
     //===========================================================================================
@@ -185,10 +241,14 @@ int main(int argc, char* argv[])
 
     // pointsModel->setBorrowedRoot(cache.getRaw(fileName));
     QObject::connect(updateButt, &QPushButton::clicked, &w, [&](bool checked) {
+        allActivate(false, toggle, jumpPointButt, prevButt, currButt, nextButt);
+
         if (firstName->text().isEmpty() && lastName->text().isEmpty() && patronymicName->text().isEmpty())
             qDebug() << "\nSORRY all empty";
         qDebug() << firstName->text() << lastName->text() << patronymicName->text();
         updateTreeView(fileView, parts, cache, readFiles, pointsModel, fileModel, lastName->text(), firstName->text(), patronymicName->text());
+
+        allActivate(true, toggle, jumpPointButt, prevButt, currButt, nextButt);
     });
 
     QObject::connect(fileView->selectionModel(), &QItemSelectionModel::currentChanged,
@@ -204,14 +264,10 @@ int main(int argc, char* argv[])
         });
 
     QObject::connect(pointsView, &RowBandTreeView::clicked, &w, [&](const QModelIndex& index) {
-        QString key = fileView->currentIndex().data().toString();
-        if (key == "") {
-            key = fileView->indexAt({ fileView->currentIndex().row(), 0 }).data().toString();
-        }
-
         auto in = index.siblingAtColumn(0).data().toString();
         qDebug() << "pointsView: " << in;
 
+        QString key = currentFileViewName(fileView);
         QString poitnText = parts->poinText(key, in);
         text->setText(poitnText);
     });
@@ -226,28 +282,22 @@ int main(int argc, char* argv[])
         }
     });
 
+    QObject::connect(currButt, &QPushButton::clicked, &w, [&](bool checked) {
+        if (pointsModel->getRoot() == nullptr)
+            return;
+
+        auto* item = cache->getRawFound(currentFileViewName(fileView));
+        for (auto c : item->children()) {
+            qDebug() << "child for: " << c->data().toString();
+        }
+        jumpToPoint(pointsModel, pointsView, item->children().at(0)->data().toString());
+    });
+
     QObject::connect(jumpPointButt, &QPushButton::clicked, &w, [&](bool checked) {
         if (pointsModel->getRoot() == nullptr)
             return;
 
-        QModelIndexList matches = pointsModel->match(
-            pointsModel->rootIndex(), // start search
-            Qt::DisplayRole,
-            pointLabel->text(), // text to find
-            1, // stop after 1 match
-            Qt::MatchRecursive | Qt::MatchExactly);
-
-        if (!matches.isEmpty()) {
-            qDebug() << "\n~~FOUND point: " << pointLabel->text();
-            QModelIndex idx = matches.first();
-            pointsView->expand(idx.parent()); // open the parent
-            pointsView->scrollTo(idx);
-            pointsView->setCurrentIndex(idx);
-            pointsView->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-        }
-
-        else
-            qDebug() << "\n~~CANT FOUND point: " << pointLabel->text();
+        jumpToPoint(pointsModel, pointsView, pointLabel->text());
     });
 
     return a.exec();

@@ -53,6 +53,11 @@ QVariant TreeItem::data() const
     return val;
 }
 
+QString TreeItem::getName() const
+{
+    return name;
+}
+
 bool TreeItem::setData(const QVariant& v)
 {
     val = v.toString();

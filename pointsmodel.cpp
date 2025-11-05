@@ -67,7 +67,7 @@ QVariant PointsModel::data(const QModelIndex& index, int role) const
 
     auto* item = itemFromIndex(index);
 
-    qDebug() << ">item:" << item << " index:" << index;
+    //qDebug() << ">item:" << item << " index:" << index;
 
     QString name;
     bool hasName = item->hasName(name);
