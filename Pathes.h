@@ -3,4 +3,4 @@
 #include <QString>
 
 
-static QString rootDir = R"(C:\Users\svyat\Desktop\Syava_stroyova\converted\DocToTxt\)";
+static QString rootDir = R"(C:\Users\svyat\Desktop\Syava_stroyovaORIG\CONVERTED\DocToTxt\)";

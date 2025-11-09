@@ -75,24 +75,19 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
 {
     readFiles->collectFiles(lastStem, firstStem, patrStem);
     auto d = readFiles->result();
-    for (auto i : d) {
-        qDebug() << "INFO:::" << i.fileName;
-        // parts->parse(i.fileName, rawText);
-        parts->parse(lastStem, firstStem, patrStem, i.fileName);
-        cache->put(i.fileName);
-        cache->putFound(i.fileName);
+
+    for (auto it = d.begin(); it!= d.end(); ++it) {
+        parts->parse(lastStem, firstStem, patrStem, it->fileName);
+        cache->put(it->fileName);
+        cache->putFound(it->fileName);
     }
-    // parts->parse(fileName);
-    // cache.put(fileName);
 
-    for (auto fileName : parts->filesName()) {
-        pointsModel->setBorrowedRoot(cache->getRaw(fileName));
+    for (auto it = d.begin(); it!= d.end(); ++it) {
+        pointsModel->setBorrowedRoot(cache->getRaw(it->fileName));
         auto* parentItem = pointsModel->getRoot();
-        auto* parentFoundRoot = cache->getRawFound(fileName);
+        auto* parentFoundRoot = cache->getRawFound(it->fileName);
 
-        fileModel->appendRow({ new QStandardItem(fileName), new QStandardItem() });
-
-        for (auto points : parts->pointData(fileName)) {
+        for (auto points : parts->pointData(it->fileName)) {
             int dotCount = points.marker.count('.');
             int depth = dotCount - 1; // subtract the final dot
             QString indent(depth * 4, ' '); // 4 spaces per level
@@ -130,6 +125,9 @@ void updateTreeView(QTableView* fileView, ParseAndRead* parts, TreeItemCache* ca
 
             // qDebug() << points.marker;
         }
+
+        int res = cache->getRawFound(it->fileName)->childCount();
+        fileModel->appendRow({ new QStandardItem(it->fileName), new QStandardItem(QString::number(res)) });
     }
 
     if (fileModel->rowCount() > 0) {
